@@ -7,12 +7,16 @@ import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.view.Viewer;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+
 import javax.imageio.ImageIO;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
+
 import org.graphstream.graph.Node;
 import org.graphstream.ui.swing_viewer.ViewPanel;
 import java.awt.GridLayout;
@@ -81,7 +85,7 @@ public class Funciones {
 				parte=parte*3.1415/Math.PI;
 				double angle = angleInc;
 				
-				String padrePadre=grupo.getPadreID(j);
+				/*String padrePadre=grupo.getPadreID(j);
 				
 
 				if(padrePadre!=null) {
@@ -100,7 +104,7 @@ public class Funciones {
 							angle+=angPadrePadre;
 						}
 					}
-				}
+				}*/
 				
 				x=x+radius*Math.cos(angle);
 				y=y+radius*Math.sin(angle);
@@ -137,17 +141,28 @@ public class Funciones {
 	}
 	
 	
-	public static void captureImage(Viewer viewer, String filePath) {
+	public static void captureImage(Viewer viewer, String filePath, int i) {
         try {
+            Thread.sleep((long) (250*Math.pow(i, 1.5)));
+        	
             ViewPanel view = (ViewPanel) viewer.getDefaultView();
 
             // Get the graph rendering as a BufferedImage
-            BufferedImage image = new BufferedImage(view.getWidth(), view.getHeight(), BufferedImage.TYPE_INT_ARGB);
-            view.paint(image.getGraphics());
+            SwingUtilities.invokeAndWait(() -> {
+                try {
+                	BufferedImage image = new BufferedImage(view.getWidth(), view.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    view.paint(image.getGraphics());
 
-            // Save the image to a file
-            File file = new File(filePath);
-            ImageIO.write(image, "png", file);
+                    // Save the image to a file
+                    File file = new File(filePath);
+					ImageIO.write(image, "png", file);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+            });
+            
+            
             //System.out.println("Graph image saved to " + filePath);
         } catch (Exception e) {
             e.printStackTrace();
