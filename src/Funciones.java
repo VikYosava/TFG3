@@ -82,7 +82,7 @@ public class Funciones {
 				double radius=cantmax/4;
 				
 				double angleInc=(j-cantEini)*parte*Math.PI/(grupo.size()-cantEini);
-				parte=parte*3.1415/Math.PI;
+				//parte=parte*3.1415/Math.PI;
 				double angle = angleInc;
 				
 				/*String padrePadre=grupo.getPadreID(j);
@@ -140,28 +140,134 @@ public class Funciones {
 		        
 	}
 	
+	public static Graph GenerarGrafoG(Generados grupo, int cantEini) {
+        Graph grafoFinal=new SingleGraph("Poblaciones");
+		System.setProperty("org.graphstream.ui", "swing");
+		// Se crean los nodos padre
+		int cantmax=40;	
+		int cantmin=3;
+	
+		
+		for(int i=0;i<cantEini;i++) {
+			int cant=grupo.getCantID(i);
+			short[] especie=grupo.getEspecieID(i);
+			String especieString=java.util.Arrays.toString(especie)+i;
+			Node node=grafoFinal.addNode(especieString);
+			node.setAttribute("Cant", cant);
+			if(cant<cantmin) {
+				cant=cantmin;
+			}else if(cant>cantmax) {
+				cant=cantmax;
+			}
+			
+			String color=chooseColor(grupo, i);
+			node.setAttribute("ui.style", "size: " + cant + "; fill-color: "+color+";");
+			
+			node.setAttribute("x", i*50);
+			node.setAttribute("y", -i*50);
+			//System.out.println("xget "+grafoFinal.getNode(especieString).getAttribute("x"));
+		}
+		double parte=2;
+		for(int j=cantEini;j<grupo.size();j++) {
+			// Se construye un nuevo nodo, determinamos su tamaño segun la cantidad de individuos
+			// de la especie, y el nombre por el código genético+la posición en la lista de especies
+			int cant=grupo.getCantID(j);
+			short[] especie=grupo.getEspecieID(j);
+			String especieString=java.util.Arrays.toString(especie)+j;
+			Node node=grafoFinal.addNode(especieString);
+			node.setAttribute("Cant", cant);
+			if(cant<cantmin) {
+				cant=cantmin;
+			}else if(cant>cantmax) {
+				cant=cantmax;
+			}
+			
+			
+			String color=chooseColor(grupo, j);
+			node.setAttribute("ui.style", "size: " + cant + "; fill-color: "+color+";");			
+			String padre=grupo.getPadreID(j);
+			// Comprobamos si el nodo es padre o hijo
+			if(padre!=null) {
+				// si es hijo, buscamos a su padre y lo unimos con un edge
+				Node parentNode=grafoFinal.getNode(padre);
+				int cantPadre=((Number) parentNode.getAttribute("Cant")).intValue();
+				
+				double x=((Number)parentNode.getAttribute("x")).doubleValue();
+				double y=((Number)parentNode.getAttribute("y")).doubleValue();
+				double radius=cantmax/4;
+				
+				double angleInc=(j-cantEini)*parte*Math.PI/(grupo.size()-cantEini);
+				//parte=parte*3.1415/Math.PI;
+				double angle = angleInc;
+				
+				/*String padrePadre=grupo.getPadreID(j);
+				
+
+				if(padrePadre!=null) {
+					Node padrePadreNode=grafoFinal.getNode(padrePadre);
+					double xpp=((Number)padrePadreNode.getAttribute("x")).doubleValue();
+					//System.out.println(padrePadreNode);
+					double ypp=((Number)padrePadreNode.getAttribute("y")).doubleValue();
+					double dac=xpp-x;
+					double dab=Math.sqrt((xpp-x)*(xpp-x)+(ypp-y)*(ypp-y));
+					
+					if(dab!=0){
+						double angPadrePadre=Math.acos(dac/dab);
+						//System.out.println(dab);
+						//System.out.println(angPadrePadre);
+						if(angPadrePadre!=0) {
+							angle+=angPadrePadre;
+						}
+					}
+				}*/
+				
+				x=x+radius*Math.cos(angle);
+				y=y+radius*Math.sin(angle);
+				
+				
+				node.setAttribute("x", x);
+				node.setAttribute("y", y);
+				
+				Edge edge=grafoFinal.addEdge(padre+especieString, padre, especieString);
+				edge.setAttribute("ui.length", cantPadre+cant);
+				edge.setAttribute("ui.style", "fill-color: " + color + ";");
+			}
+
+		}
+		
+		//Node firstNode=grafoFinal.getNode(0);
+		//firstNode.setAttribute("xyz", 0,0,0);
+		
+	    //grafoFinal.setAttribute("layout.force", 1); // Desactivar el layout automático
+
+		Viewer viewer = grafoFinal.display();
+		//viewer.disableAutoLayout();
+		//viewer.enableXYZfeedback(true);
+        viewer.getDefaultView().enableMouseOptions();
+        //viewer.getDefaultView().setMouseManager(new NodeClickMouseManager(viewer, grafoFinal));
+        //double centx=((Number)grafoFinal.getNode(0).getAttribute("x")).doubleValue();
+        //double centy=((Number)grafoFinal.getNode(0).getAttribute("y")).doubleValue();
+		
+        return grafoFinal;
+        
+		
+		//viewer.getDefaultView().getCamera().setViewCenter(centx, centy, 0);
+		        
+	}
 	
 	public static void captureImage(Viewer viewer, String filePath, int i) {
         try {
-            Thread.sleep((long) (250*Math.pow(i, 1.5)));
         	
             ViewPanel view = (ViewPanel) viewer.getDefaultView();
 
             // Get the graph rendering as a BufferedImage
-            SwingUtilities.invokeAndWait(() -> {
-                try {
                 	BufferedImage image = new BufferedImage(view.getWidth(), view.getHeight(), BufferedImage.TYPE_INT_ARGB);
                     view.paint(image.getGraphics());
 
                     // Save the image to a file
                     File file = new File(filePath);
 					ImageIO.write(image, "png", file);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-            });
-            
+
             
             //System.out.println("Graph image saved to " + filePath);
         } catch (Exception e) {
